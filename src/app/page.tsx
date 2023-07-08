@@ -1,8 +1,6 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { observer } from 'mobx-react-lite';
-import { types, Instance, flow } from 'mobx-state-tree';
 
 interface Todo {
   id: number;
@@ -11,104 +9,79 @@ interface Todo {
   editMode: boolean;
 }
 
-const TodoModel = types
-  .model('Todo', {
-    id: types.identifierNumber,
-    text: types.string,
-    completed: false,
-    editMode: false,
-  })
-  .actions(self => ({
-    toggleComplete() {
-      self.completed = !self.completed;
-    },
-    toggleEditMode() {
-      self.editMode = !self.editMode;
-    },
-    updateText(newText: string) {
-      self.text = newText;
-    },
-  }));
-
-  const TodoStore = types
-  .model('TodoStore', {
-    todos: types.array(TodoModel),
-  })
-  .actions(self => ({
-    addTodo: flow(function* (text: string) {
-      const newTodo: Todo = {
-        id: self.todos.length + 1,
-        text,
-        completed: false,
-        editMode: false,
-      };
-
-      self.todos.push(newTodo);
-      self.updateLocalStorage();
-    }),
-    deleteTodoById: flow(function* (id: number) {
-      self.todos.replace(self.todos.filter(todo => todo.id !== id));
-      self.updateLocalStorage();
-    }),
-    updateLocalStorage: flow(function* () {
-      const todosJSON = JSON.stringify(self.todos);
-       localStorage.setItem('todos', todosJSON);
-    }),
-    getTodosFromLocalStorage: flow(function* () {
-      const storedTodos = localStorage.getItem('todos');
-      if (storedTodos) {
-        const parsedTodos = JSON.parse(storedTodos);
-        self.todos = parsedTodos;
-      }
-    }),
-  }));
-
-
-
-type TodoStoreType = Instance<typeof TodoStore>;
-
-const todoStore = TodoStore.create({
-  todos: [],
-});
-
 const TodoApp: React.FC = () => {
+  const [todos, setTodos] = useState<Todo[]>([]);
   const [todoText, setTodoText] = useState('');
 
   useEffect(() => {
-    todoStore.getTodosFromLocalStorage();
+    const storedTodos = localStorage.getItem('todos');
+    if (storedTodos) {
+      const parsedTodos: Todo[] = JSON.parse(storedTodos);
+      setTodos(parsedTodos);
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }, [todos]);
 
   const addTodo = () => {
     if (todoText.trim() === '') return;
 
-    todoStore.addTodo(todoText);
+    const newTodo: Todo = {
+      id: todos.length + 1,
+      text: todoText,
+      completed: false,
+      editMode: false,
+    };
+
+    setTodos([...todos, newTodo]);
     setTodoText('');
   };
 
   const deleteTodo = (id: number) => {
-    todoStore.deleteTodoById(id);
+    const updatedTodos = todos.filter(todo => todo.id !== id);
+    setTodos(updatedTodos);
   };
 
   const toggleComplete = (id: number) => {
-    const todo = todoStore.todos.find(todo => todo.id === id);
-    if (todo) {
-      todo.toggleComplete();
-    }
+    const updatedTodos = todos.map(todo => {
+      if (todo.id === id) {
+        return {
+          ...todo,
+          completed: !todo.completed,
+        };
+      }
+      return todo;
+    });
+    setTodos(updatedTodos);
   };
 
   const toggleEditMode = (id: number) => {
-    const todo = todoStore.todos.find(todo => todo.id === id);
-    if (todo) {
-      todo.toggleEditMode();
-    }
+    const updatedTodos = todos.map(todo => {
+      if (todo.id === id) {
+        return {
+          ...todo,
+          editMode: !todo.editMode,
+        };
+      }
+      return todo;
+    });
+    setTodos(updatedTodos);
   };
 
   const updateTodoText = (id: number, newText: string) => {
-    const todo = todoStore.todos.find(todo => todo.id === id);
-    if (todo) {
-      todo.updateText(newText);
-      todo.toggleEditMode();
-    }
+    const updatedTodos = todos.map(todo => {
+      if (todo.id === id) {
+        return {
+          ...todo,
+          text: newText,
+          editMode: false,
+        };
+      }
+      return todo;
+    });
+    setTodos(updatedTodos);
   };
 
   return (
@@ -131,7 +104,7 @@ const TodoApp: React.FC = () => {
       </div>
 
       <ul className='flex flex-col items-center'>
-        {todoStore.todos.map(todo => (
+        {todos.map(todo => (
           <li
             key={todo.id}
             className='flex items-center justify-between mb-2 min-w-[340px] mt-5 border border-blue p-3 rounded'
@@ -140,7 +113,7 @@ const TodoApp: React.FC = () => {
               <input
                 type='text'
                 value={todo.text}
-                onChange={e => todo.updateText(e.target.value)}
+                onChange={e => updateTodoText(todo.id, e.target.value)}
                 className='border border-gray-300 rounded p-2 mr-2'
               />
             ) : (
@@ -187,4 +160,4 @@ const TodoApp: React.FC = () => {
   );
 };
 
-export default observer(TodoApp);
+export default TodoApp;
