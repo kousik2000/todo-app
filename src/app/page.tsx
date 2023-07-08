@@ -50,9 +50,10 @@ const TodoModel = types
       self.todos.replace(self.todos.filter(todo => todo.id !== id));
       self.updateLocalStorage();
     }),
-    updateLocalStorage() {
-      localStorage.setItem('todos', JSON.stringify(self.todos));
-    },
+    updateLocalStorage: flow(function* () {
+      const todosJSON = JSON.stringify(self.todos);
+       localStorage.setItem('todos', todosJSON);
+    }),
     getTodosFromLocalStorage: flow(function* () {
       const storedTodos = localStorage.getItem('todos');
       if (storedTodos) {
@@ -60,11 +61,8 @@ const TodoModel = types
         self.todos = parsedTodos;
       }
     }),
-    updateLocalStorage: flow(function* () {
-      const todosJSON = JSON.stringify(self.todos);
-      yield localStorage.setItem('todos', todosJSON);
-    }),
   }));
+
 
 
 type TodoStoreType = Instance<typeof TodoStore>;
