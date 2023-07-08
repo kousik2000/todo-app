@@ -30,7 +30,7 @@ const TodoModel = types
     },
   }));
 
-const TodoStore = types
+  const TodoStore = types
   .model('TodoStore', {
     todos: types.array(TodoModel),
   })
@@ -60,7 +60,12 @@ const TodoStore = types
         self.todos = parsedTodos;
       }
     }),
+    updateLocalStorage: flow(function* () {
+      const todosJSON = JSON.stringify(self.todos);
+      yield localStorage.setItem('todos', todosJSON);
+    }),
   }));
+
 
 type TodoStoreType = Instance<typeof TodoStore>;
 
