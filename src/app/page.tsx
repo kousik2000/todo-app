@@ -8,6 +8,7 @@ interface Todo {
   id: number;
   text: string;
   completed: boolean;
+  editMode: boolean;
 }
 
 const TodoModel = types
@@ -15,10 +16,17 @@ const TodoModel = types
     id: types.identifierNumber,
     text: types.string,
     completed: false,
+    editMode: false,
   })
   .actions(self => ({
     toggleComplete() {
       self.completed = !self.completed;
+    },
+    toggleEditMode() {
+      self.editMode = !self.editMode;
+    },
+    updateText(newText: string) {
+      self.text = newText;
     },
   }));
 
@@ -32,6 +40,7 @@ const TodoStore = types
         id: self.todos.length + 1,
         text,
         completed: false,
+        editMode: false,
       };
 
       self.todos.push(newTodo);
@@ -84,6 +93,21 @@ const TodoApp: React.FC = () => {
     }
   };
 
+  const toggleEditMode = (id: number) => {
+    const todo = todoStore.todos.find(todo => todo.id === id);
+    if (todo) {
+      todo.toggleEditMode();
+    }
+  };
+
+  const updateTodoText = (id: number, newText: string) => {
+    const todo = todoStore.todos.find(todo => todo.id === id);
+    if (todo) {
+      todo.updateText(newText);
+      todo.toggleEditMode();
+    }
+  };
+
   return (
     <div className='bg-white min-h-screen p-4'>
       <h1 className='text-2xl font-bold mb-4 text-center'>Todo App</h1>
@@ -101,7 +125,6 @@ const TodoApp: React.FC = () => {
         >
           Add Todo
         </button>
-
       </div>
 
       <ul className='flex flex-col items-center'>
@@ -110,23 +133,50 @@ const TodoApp: React.FC = () => {
             key={todo.id}
             className='flex items-center justify-between mb-2 min-w-[340px] mt-5 border border-blue p-3 rounded'
           >
-            <div className='flex items-center'>
+            {todo.editMode ? (
               <input
-                type='checkbox'
-                checked={todo.completed}
-                onChange={() => toggleComplete(todo.id)}
-                className='mr-2'
+                type='text'
+                value={todo.text}
+                onChange={e => todo.updateText(e.target.value)}
+                className='border border-gray-300 rounded p-2 mr-2'
               />
-              <span className={todo.completed ? 'line-through' : ''}>
-                {todo.text}
-              </span>
+            ) : (
+              <div className='flex items-center'>
+                <input
+                  type='checkbox'
+                  checked={todo.completed}
+                  onChange={() => toggleComplete(todo.id)}
+                  className='mr-2'
+                />
+                <span className={todo.completed ? 'line-through' : ''}>
+                  {todo.text}
+                </span>
+              </div>
+            )}
+
+            <div>
+              {todo.editMode ? (
+                <button
+                  className='bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded mr-1'
+                  onClick={() => updateTodoText(todo.id, todo.text)}
+                >
+                  Save
+                </button>
+              ) : (
+                <button
+                  className='bg-yellow-500 hover:bg-yellow-700 text-white py-1 px-2 rounded mr-2'
+                  onClick={() => toggleEditMode(todo.id)}
+                >
+                  Edit
+                </button>
+              )}
+              <button
+                onClick={() => deleteTodo(todo.id)}
+                className='bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded'
+              >
+                Delete
+              </button>
             </div>
-            <button
-              onClick={() => deleteTodo(todo.id)}
-              className='bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded ml-auto'
-            >
-              Delete
-            </button>
           </li>
         ))}
       </ul>
