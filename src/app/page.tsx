@@ -73,13 +73,12 @@ const TodoApp: React.FC = () => {
     setTodos(updatedTodos);
   };
 
-  const updateTodoText = (id: number, newText: string) => {
+  const saveTodoText = (id: number, newText: string) => {
     const updatedTodos = todos.map(todo => {
       if (todo.id === id) {
         return {
           ...todo,
           text: newText,
-          editMode: false,
         };
       }
       return todo;
@@ -122,7 +121,7 @@ const TodoApp: React.FC = () => {
               <input
                 type='text'
                 value={todo.text}
-                onChange={e => updateTodoText(todo.id, e.target.value)}
+                onChange={e => saveTodoText(todo.id, e.target.value)}
                 className='border border-gray-300 rounded p-2 mr-2'
               />
             ) : (
