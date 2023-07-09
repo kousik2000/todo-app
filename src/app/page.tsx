@@ -102,6 +102,7 @@ const TodoApp: React.FC = () => {
           className='border border-gray-300 rounded p-2 mr-2'
           value={todoText}
           onChange={e => setTodoText(e.target.value)}
+          placeholder='What your next task?'
         />
         <button
           className='bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded'
